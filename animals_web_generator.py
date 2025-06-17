@@ -1,18 +1,32 @@
 import json
 
 
-def load_data(file_path):
+def read_json_file(file_path):
     """
-    Loads a JSON file and returns its content as a Python object.
+    Reads and returns data from a JSON file.
 
     Args:
         file_path (str): Path to the JSON file.
 
     Returns:
-        list[dict]: A list of animal data dictionaries.
+        dict: The parsed JSON data.
     """
-    with open(file_path, "r") as handle:
-        return json.load(handle)
+    with open(file_path, 'r') as file:
+        return json.load(file)
+
+
+def read_template_file(file_path):
+    """
+    Reads the HTML template file.
+
+    Args:
+        file_path (str): Path to the template file.
+
+    Returns:
+        str: The contents of the template file.
+    """
+    with open(file_path, 'r') as file:
+        return file.read()
 
 
 def serialize_animal(animal):
@@ -38,63 +52,78 @@ def serialize_animal(animal):
     if "characteristics" in animal and 'diet' in animal['characteristics']:
         output += f'      <strong>Diet:</strong> {animal["characteristics"]["diet"]}<br/>\n'
 
-    # First listed location (if available)
-    if "locations" in animal and animal['locations']:
+    # Location information
+    if 'locations' in animal and len(animal['locations']) > 0:
         output += f'      <strong>Location:</strong> {animal["locations"][0]}<br/>\n'
 
-    # Animal type (e.g., mammal, bird, etc.)
-    if "characteristics" in animal and 'type' in animal['characteristics']:
-        output += f'      <strong>Type:</strong> {animal['characteristics']["type"]}<br/>\n'
+    # Type information (if available)
+    if 'characteristics' in animal and 'type' in animal['characteristics']:
+        output += f'      <strong>Type:</strong> {animal["characteristics"]["type"]}<br/>\n'
 
-    # End description and list item
     output += '    </p>\n'
     output += '  </li>\n'
     return output
 
 
-def generate_animal_output(data):
+def generate_animal_cards(animals):
     """
-    Generates the full HTML block with cards for all animals in the dataset.
+    Generates HTML for all animal cards.
 
     Args:
-        data (list[dict]): A list of animal dictionaries.
+        animals (list): List of animal dictionaries.
 
     Returns:
-        str: A concatenated HTML string with all animal cards.
+        str: Combined HTML string of all animal cards.
     """
-    return ''.join(serialize_animal(animal) for animal in data)
+    return ''.join(serialize_animal(animal) for animal in animals)
 
 
-def replace_template(html_template_path, output_text, result_path):
+def write_html_file(content, file_path):
     """
-    Replaces a placeholder in the HTML template with generated animal HTML,
-    and writes the result to a new file.
+    Writes the final HTML content to a file.
 
     Args:
-        html_template_path (str): Path to the template HTML file.
-        output_text (str): Generated HTML for animals.
-        result_path (str): Output path for the final HTML file.
+        content (str): The HTML content to write.
+        file_path (str): Path to the output file.
     """
-    with open(html_template_path, "r") as template_file:
-        template_content = template_file.read()
-
-    # Replace the placeholder with generated content
-    final_html = template_content.replace("__REPLACE_ANIMALS_INFO__", output_text)
-
-    # Write final HTML to file
-    with open(result_path, "w") as result_file:
-        result_file.write(final_html)
-
-    print(f"✅ HTML successfully written to {result_path}")
+    with open(file_path, 'w') as file:
+        file.write(content)
 
 
-# Entry point of the script
-if __name__ == "__main__":
-    # Load animal data from JSON file
-    data = load_data("animals_data.json")
+def replace_template(template, animals_html):
+    """
+    Replaces the placeholder in the template with generated content.
 
-    # Generate animal cards as HTML
-    animal_info = generate_animal_output(data)
+    Args:
+        template (str): The HTML template string.
+        animals_html (str): The generated HTML for all animals.
 
-    # Inject the generated HTML into the template and save the result
-    replace_template("animals_template.html", animal_info, "animals.html")
+    Returns:
+        str: The complete HTML with replaced content.
+    """
+    return template.replace('__REPLACE_ANIMALS_INFO__', animals_html)
+
+
+def main():
+    """
+    Main function that orchestrates the HTML generation process.
+    """
+    # File paths
+    json_file = 'animals_data.json'
+    template_file = 'animals_template.html'
+    output_file = 'animals.html'
+
+    # Read input files
+    animals_data = read_json_file(json_file)
+    template_content = read_template_file(template_file)
+
+    # Generate HTML content
+    animals_html = generate_animal_cards(animals_data)
+    final_html = replace_template(template_content, animals_html)
+
+    # Write output file
+    write_html_file(final_html, output_file)
+
+
+if __name__ == '__main__':
+    main()
